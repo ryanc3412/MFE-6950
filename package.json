@@ -1,0 +1,11 @@
+{
+  "name": "mfe-minimal",
+  "private": true,
+  "scripts": {
+    "dev:shell": "pnpm --filter shell dev",
+    "dev:remote-a": "pnpm --filter remote-a dev",
+    "dev:remote-b": "pnpm --filter remote-b dev",
+    "dev:api": "cd api && python -m uvicorn main:app --reload --port 3002"
+  },
+  "description": "Minimal MFE demo: shell + 2 remotes + API (CS6950)"
+}
