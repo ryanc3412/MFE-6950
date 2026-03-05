@@ -11,7 +11,8 @@ const nextConfig = {
         remotes: {
           remote_a: `remote_a@http://localhost:3001/_next/static/chunks/remoteEntry.js`,
           remote_b: `remote_b@http://localhost:3003/_next/static/chunks/remoteEntry.js`,
-          remote_vue: `remote_vue@http://localhost:3004/assets/remoteEntry.js`,
+          // Vue remote is loaded manually in hello-world.tsx via import(url) so it runs as ESM (import.meta works).
+          // Do not add remote_vue here or the runtime will load it as a classic script and break.
         },
         shared: {},
       })

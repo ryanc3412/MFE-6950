@@ -3,7 +3,7 @@ const currentImports = {};
       let moduleMap = {
 "./VueApp":()=>{
       dynamicLoadingCss(["style-lEvM79_V.css"], false, './VueApp');
-      return __federation_import('./__federation_expose_VueApp-CQ5s8Jqm.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
+      return __federation_import('http://localhost:3004/assets/__federation_expose_VueApp-CQ5s8Jqm.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
       const seen = {};
       const dynamicLoadingCss = (cssFilePaths, dontAppendStylesToHead, exposeItemName) => {
         const metaUrl = import.meta.url;
@@ -13,7 +13,7 @@ const currentImports = {};
         }
 
         const curUrl = metaUrl.substring(0, metaUrl.lastIndexOf('remoteEntry.js'));
-        const base = '/';
+        const base = 'http://localhost:3004/';
         'assets';
 
         cssFilePaths.forEach(cssPath => {
