@@ -11,6 +11,7 @@ const nextConfig = {
         remotes: {
           remote_a: `remote_a@http://localhost:3001/_next/static/chunks/remoteEntry.js`,
           remote_b: `remote_b@http://localhost:3003/_next/static/chunks/remoteEntry.js`,
+          remote_vue: `remote_vue@http://localhost:3004/assets/remoteEntry.js`,
         },
         shared: {},
       })

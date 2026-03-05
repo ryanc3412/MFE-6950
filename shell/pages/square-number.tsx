@@ -1,10 +1,10 @@
 import dynamic from "next/dynamic";
 
-const RemoteSquareNumber = dynamic(
-  () => import("../components/RemoteSquareNumber"),
+const SquareNumber = dynamic(
+  () => import("remote_a/SquareNumber").then((mod) => mod.default),
   { ssr: false }
 );
 
 export default function SquareNumberPage() {
-  return <RemoteSquareNumber />;
+  return <SquareNumber />;
 }

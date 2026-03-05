@@ -2,3 +2,4 @@ packages:
   - "shell"
   - "remote-a"
   - "remote-b"
+  - "remote-vue"

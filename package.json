@@ -5,6 +5,8 @@
     "dev:shell": "pnpm --filter shell dev",
     "dev:remote-a": "pnpm --filter remote-a dev",
     "dev:remote-b": "pnpm --filter remote-b dev",
+    "dev:remote-vue": "pnpm --filter remote-vue dev",
+    "dev:remote-vue:fed": "pnpm --filter remote-vue preview:fed",
     "dev:api": "cd api && python -m uvicorn main:app --reload --port 3002"
   },
   "description": "Minimal MFE demo: shell + 2 remotes + API (CS6950)"

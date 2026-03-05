@@ -1,10 +1,10 @@
 import dynamic from "next/dynamic";
 
-const RemoteCharacterCount = dynamic(
-  () => import("../components/RemoteCharacterCount"),
+const CharacterCount = dynamic(
+  () => import("remote_b/CharacterCount").then((mod) => mod.default),
   { ssr: false }
 );
 
 export default function CharacterCountPage() {
-  return <RemoteCharacterCount />;
+  return <CharacterCount />;
 }

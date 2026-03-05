@@ -61,6 +61,19 @@ export default function ShellLayout({
           >
             Character Count
           </Link>
+          <Link
+            href="/hello-world"
+            style={{
+              display: "block",
+              padding: "0.5rem 1rem",
+              color: router.pathname === "/hello-world" ? "#111" : "#333",
+              fontWeight: router.pathname === "/hello-world" ? 600 : 400,
+              background:
+                router.pathname === "/hello-world" ? "#e8e8e8" : "transparent",
+            }}
+          >
+            Hello World
+          </Link>
         </nav>
       </aside>
       <main
