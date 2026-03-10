@@ -18,8 +18,7 @@ All app source lives in those directories; no `packages/`, no Turbo.
 ## One-time setup
 
 - **Node:** From repo root run `pnpm install` (installs shell, remote-a, remote-b, remote-vue).
-- **API:** `cd api && pip install -r requirements.txt` (or use a venv).
-- **Stock Price:** Copy `shell/.env.example` to `shell/.env.local` and set `FINNHUB_API_KEY` to your [Finnhub](https://finnhub.io/register) API key.
+- **API:** `cd api && pip install -r requirements.txt` (or use a venv). For **Stock Price**, copy `api/.env.example` to `api/.env` and set `FINNHUB_API_KEY` ([get a key](https://finnhub.io/register)).
 
 ## Run (5 terminals)
 

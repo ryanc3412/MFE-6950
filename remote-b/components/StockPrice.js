@@ -3,6 +3,8 @@
 import { useState } from "react";
 import StockPriceView from "./StockPriceView.js";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+
 export default function StockPrice() {
   const [symbol, setSymbol] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,10 +18,11 @@ export default function StockPrice() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`/api/stock?symbol=${encodeURIComponent(s)}`);
+      const res = await fetch(`${API_BASE}/stock?symbol=${encodeURIComponent(s)}`);
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Failed to fetch quote");
+        const msg = typeof data.detail === "string" ? data.detail : data.error || "Failed to fetch quote";
+        setError(msg);
         return;
       }
       setList((prev) => [
@@ -27,7 +30,7 @@ export default function StockPrice() {
         ...prev,
       ]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
+      setError(err instanceof Error ? err.message : "Request failed. Is the API running on port 3002?");
     } finally {
       setLoading(false);
     }
