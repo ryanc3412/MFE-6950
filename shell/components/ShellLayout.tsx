@@ -62,6 +62,19 @@ export default function ShellLayout({
             Character Count
           </Link>
           <Link
+            href="/stock"
+            style={{
+              display: "block",
+              padding: "0.5rem 1rem",
+              color: router.pathname === "/stock" ? "#111" : "#333",
+              fontWeight: router.pathname === "/stock" ? 600 : 400,
+              background:
+                router.pathname === "/stock" ? "#e8e8e8" : "transparent",
+            }}
+          >
+            Stock Price
+          </Link>
+          <Link
             href="/hello-world"
             style={{
               display: "block",

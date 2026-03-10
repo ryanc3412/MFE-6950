@@ -10,6 +10,7 @@ const nextConfig = {
         filename: 'static/chunks/remoteEntry.js',
         exposes: {
           './CharacterCount': './components/CharacterCount.js',
+          './StockPrice': './components/StockPrice.js',
         },
         shared: {},
       })
