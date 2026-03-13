@@ -9,9 +9,9 @@ export default function SquareNumberView({
   loading,
 }) {
   return (
-    <div style={{ padding: "1rem", maxWidth: "20rem", margin: "0 auto" }}>
+    <div className="tool-page">
       <form onSubmit={onSubmit}>
-        <label htmlFor="number-input" style={{ display: "block", marginBottom: "0.5rem" }}>
+        <label htmlFor="number-input" className="tool-label">
           Enter a number
         </label>
         <input
@@ -21,41 +21,19 @@ export default function SquareNumberView({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={loading}
-          style={{
-            display: "block",
-            width: "100%",
-            padding: "0.5rem",
-            marginBottom: "0.5rem",
-            boxSizing: "border-box",
-          }}
+          className="tool-input"
         />
-        <button type="submit" disabled={loading} style={{ padding: "0.5rem 1rem" }}>
+        <button type="submit" disabled={loading} className="tool-button">
           {loading ? "…" : "Square it"}
         </button>
       </form>
       {result !== null && (
-        <div
-          style={{
-            marginTop: "1rem",
-            padding: "0.75rem",
-            background: "var(--background)",
-            border: "1px solid var(--foreground)",
-            borderRadius: "4px",
-          }}
-        >
+        <div className="tool-result">
           Result: {result.number}² = {result.square}
         </div>
       )}
       {error && (
-        <div
-          style={{
-            marginTop: "1rem",
-            padding: "0.75rem",
-            color: "crimson",
-            border: "1px solid currentColor",
-            borderRadius: "4px",
-          }}
-        >
+        <div className="tool-error">
           {error}
         </div>
       )}
