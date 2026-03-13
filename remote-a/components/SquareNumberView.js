@@ -9,7 +9,7 @@ export default function SquareNumberView({
   loading,
 }) {
   return (
-    <div style={{ padding: "1rem", maxWidth: "20rem" }}>
+    <div style={{ padding: "1rem", maxWidth: "20rem", margin: "0 auto" }}>
       <form onSubmit={onSubmit}>
         <label htmlFor="number-input" style={{ display: "block", marginBottom: "0.5rem" }}>
           Enter a number

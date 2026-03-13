@@ -1,0 +1,15 @@
+# Don't bake .env into image; use env_file at runtime
+.env
+.env.*
+!.env.example
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+.venv
+venv
+# Git / IDE
+.git
+.gitignore
+.dockerignore
+*.md

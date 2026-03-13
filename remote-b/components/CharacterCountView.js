@@ -7,7 +7,7 @@ export default function CharacterCountView({
   count,
 }) {
   return (
-    <div style={{ padding: "1rem", maxWidth: "20rem" }}>
+    <div style={{ padding: "1rem", maxWidth: "20rem", margin: "0 auto" }}>
       <form onSubmit={onSubmit}>
         <label
           htmlFor="text-input"

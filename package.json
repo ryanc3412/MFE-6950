@@ -1,6 +1,7 @@
 {
   "name": "mfe-minimal",
   "private": true,
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev:shell": "pnpm --filter shell dev",
     "dev:remote-a": "pnpm --filter remote-a dev",

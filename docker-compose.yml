@@ -1,0 +1,37 @@
+services:
+  api:
+    build:
+      context: ./api
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./api/.env
+
+  remote-a:
+    build:
+      context: ./remote-a
+    ports:
+      - "3001:3001"
+
+  remote-b:
+    build:
+      context: ./remote-b
+    ports:
+      - "3003:3003"
+
+  remote-vue:
+    build:
+      context: ./remote-vue
+    ports:
+      - "3004:3004"
+
+  shell:
+    build:
+      context: ./shell
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - remote-a
+      - remote-b
+      - remote-vue

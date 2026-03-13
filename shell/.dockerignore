@@ -1,0 +1,12 @@
+# Dependencies and build output (rebuilt in container)
+node_modules
+.next
+# Env (use env_file or build-args if needed)
+.env
+.env.*
+!.env.example
+# Git / IDE
+.git
+.gitignore
+.dockerignore
+*.md
