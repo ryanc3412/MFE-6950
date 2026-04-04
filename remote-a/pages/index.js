@@ -1,5 +1,5 @@
-import SquareNumber from "../components/SquareNumber";
+import CsvTable from "../components/CsvTable";
 
 export default function Home() {
-  return <SquareNumber />;
+  return <CsvTable />;
 }

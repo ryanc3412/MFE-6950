@@ -37,6 +37,7 @@ def square(n: str = Query(...)):
     return {"number": num, "square": num * num}
 
 
+# all the safety for this function was AI generated
 @app.get("/stock")
 def stock(symbol: str = Query(..., description="Stock ticker symbol (e.g. AAPL)")):
     token = (os.environ.get("FINNHUB_API_KEY") or "").strip()

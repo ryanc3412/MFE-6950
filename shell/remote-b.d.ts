@@ -1,5 +1,12 @@
-declare module "remote_b/CharacterCount" {
-  const Component: React.ComponentType;
+declare module "remote_b/CsvUpload" {
+  type CsvParsed = {
+    headers: string[];
+    rows: string[][];
+    fileName?: string | null;
+  };
+  const Component: React.ComponentType<{
+    onParsed?: (data: CsvParsed) => void;
+  }>;
   export default Component;
 }
 

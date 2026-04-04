@@ -9,7 +9,7 @@ const nextConfig = {
         name: 'remote_b',
         filename: 'static/chunks/remoteEntry.js',
         exposes: {
-          './CharacterCount': './components/CharacterCount.js',
+          './CsvUpload': './components/CsvUpload.js',
           './StockPrice': './components/StockPrice.js',
         },
         shared: {},

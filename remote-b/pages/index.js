@@ -1,5 +1,5 @@
-import CharacterCount from "../components/CharacterCount";
+import CsvUpload from "../components/CsvUpload";
 
 export default function Home() {
-  return <CharacterCount />;
+  return <CsvUpload />;
 }

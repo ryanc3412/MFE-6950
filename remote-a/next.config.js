@@ -9,7 +9,7 @@ const nextConfig = {
         name: 'remote_a',
         filename: 'static/chunks/remoteEntry.js',
         exposes: {
-          './SquareNumber': './components/SquareNumber.js',
+          './CsvTable': './components/CsvTable.js',
         },
         shared: {},
       })

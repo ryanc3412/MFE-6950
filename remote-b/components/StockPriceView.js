@@ -17,6 +17,7 @@ export default function StockPriceView({
         >
           Stock ticker symbol
         </label>
+        {/* input field for the stock ticker symbol */}
         <input
           id="symbol-input"
           type="text"
@@ -25,6 +26,7 @@ export default function StockPriceView({
           placeholder="e.g. AAPL, MSFT, GOOGL"
           className="tool-input"
         />
+        {/* button to submit the form */}
         <button
           type="submit"
           disabled={loading}
@@ -34,12 +36,14 @@ export default function StockPriceView({
         </button>
       </form>
 
+      {/* error message */}
       {error && (
         <div className="tool-error">
           {error}
         </div>
       )}
 
+      {/* list of stock prices - AI generated code */}
       {list.length > 0 && (
         <div className="tool-list">
           <div className="tool-list-title">

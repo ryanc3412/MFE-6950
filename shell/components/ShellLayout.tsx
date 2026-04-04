@@ -46,7 +46,7 @@ export default function ShellLayout({
                 router.pathname === "/square-number" ? "#e8e8e8" : "transparent",
             }}
           >
-            Square Number
+            CSV table
           </Link>
           <Link
             href="/character-count"
@@ -59,7 +59,7 @@ export default function ShellLayout({
                 router.pathname === "/character-count" ? "#e8e8e8" : "transparent",
             }}
           >
-            Character Count
+            Upload CSV
           </Link>
           <Link
             href="/stock"
