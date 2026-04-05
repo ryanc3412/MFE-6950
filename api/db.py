@@ -11,6 +11,15 @@ def get_db_path() -> str:
     return os.environ.get("SQLITE_PATH", str(_DEFAULT_DB))
 
 
+def _ensure_category_column(conn: sqlite3.Connection) -> None:
+    cur = conn.execute("PRAGMA table_info(ledger_items)")
+    names = {row[1] for row in cur.fetchall()}
+    if "category" not in names:
+        conn.execute(
+            "ALTER TABLE ledger_items ADD COLUMN category TEXT NOT NULL DEFAULT 'other'"
+        )
+
+
 def init_db() -> None:
     path = Path(get_db_path())
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -22,10 +31,13 @@ def init_db() -> None:
                 item_date TEXT NOT NULL,
                 price REAL NOT NULL,
                 comment TEXT NOT NULL DEFAULT '',
+                category TEXT NOT NULL DEFAULT 'other',
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
             """
         )
+        conn.commit()
+        _ensure_category_column(conn)
         conn.commit()
 
 

@@ -116,11 +116,12 @@ def _normalize_item_date(raw: str) -> str:
 
 
 class LedgerItemIn(BaseModel):
-    """One stored row: when it happened, how much, and a short explanation."""
+    """One stored row: date, signed price, explanation, and category label."""
 
     item_date: str = Field(..., description="ISO date YYYY-MM-DD")
     price: float
     comment: str = Field(default="", max_length=4000)
+    category: str = Field(default="other", max_length=200)
 
 
 class BulkLedgerIn(BaseModel):
@@ -132,7 +133,7 @@ def list_ledger_items():
     with get_conn() as conn:
         cur = conn.execute(
             """
-            SELECT id, item_date, price, comment, created_at
+            SELECT id, item_date, price, comment, category, created_at
             FROM ledger_items
             ORDER BY item_date DESC, id DESC
             """
@@ -145,7 +146,8 @@ def list_ledger_items():
                 "item_date": r[1],
                 "price": r[2],
                 "comment": r[3],
-                "created_at": r[4],
+                "category": r[4],
+                "created_at": r[5],
             }
             for r in rows
         ]
@@ -156,13 +158,14 @@ def list_ledger_items():
 def create_ledger_item(body: LedgerItemIn):
     item_date = _normalize_item_date(body.item_date)
     comment = body.comment.strip()
+    category = (body.category or "other").strip() or "other"
     with get_conn() as conn:
         cur = conn.execute(
             """
-            INSERT INTO ledger_items (item_date, price, comment)
-            VALUES (?, ?, ?)
+            INSERT INTO ledger_items (item_date, price, comment, category)
+            VALUES (?, ?, ?, ?)
             """,
-            (item_date, body.price, comment),
+            (item_date, body.price, comment, category),
         )
         conn.commit()
         new_id = cur.lastrowid
@@ -171,6 +174,7 @@ def create_ledger_item(body: LedgerItemIn):
         "item_date": item_date,
         "price": body.price,
         "comment": comment,
+        "category": category,
     }
 
 
@@ -183,15 +187,16 @@ def bulk_create_ledger_items(body: BulkLedgerIn):
         )
     if not body.items:
         return {"inserted": 0}
-    normalized: list[tuple[str, float, str]] = []
+    normalized: list[tuple[str, float, str, str]] = []
     for it in body.items:
         d = _normalize_item_date(it.item_date)
-        normalized.append((d, float(it.price), it.comment.strip()))
+        cat = (it.category or "other").strip() or "other"
+        normalized.append((d, float(it.price), it.comment.strip(), cat))
     with get_conn() as conn:
         conn.executemany(
             """
-            INSERT INTO ledger_items (item_date, price, comment)
-            VALUES (?, ?, ?)
+            INSERT INTO ledger_items (item_date, price, comment, category)
+            VALUES (?, ?, ?, ?)
             """,
             normalized,
         )
@@ -223,6 +228,38 @@ def monthly_ledger_summary():
                 "income": float(r[1] or 0),
                 "expenses": float(r[2] or 0),
                 "net": float(r[3] or 0),
+            }
+            for r in rows
+        ]
+    }
+
+
+@app.get("/db/items/summary/monthly-by-category")
+def monthly_by_category_summary():
+    """Per calendar month and category: income, expenses (abs of negatives), net."""
+    with get_conn() as conn:
+        cur = conn.execute(
+            """
+            SELECT
+              strftime('%Y-%m', item_date) AS month,
+              category,
+              SUM(CASE WHEN price > 0 THEN price ELSE 0 END) AS income,
+              SUM(CASE WHEN price < 0 THEN -price ELSE 0 END) AS expenses,
+              SUM(price) AS net
+            FROM ledger_items
+            GROUP BY strftime('%Y-%m', item_date), category
+            ORDER BY month DESC, category ASC
+            """
+        )
+        rows = cur.fetchall()
+    return {
+        "rows": [
+            {
+                "month": r[0],
+                "category": r[1],
+                "income": float(r[2] or 0),
+                "expenses": float(r[3] or 0),
+                "net": float(r[4] or 0),
             }
             for r in rows
         ]

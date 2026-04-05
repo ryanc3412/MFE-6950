@@ -28,7 +28,7 @@ export default function FinancialCsvImport() {
         const rows = preprocessPurchaseRows(parsed);
         if (rows.length === 0) {
           setError(
-            "No valid rows found. Need date (column A) and price (column B); column C is skipped; description is the first non-empty cell after that (often column E if D is blank)."
+            "No valid rows found. Need date (A), price (B); C ignored; category (D); description from column E onward (first non-empty)."
           );
           return;
         }
@@ -44,9 +44,7 @@ export default function FinancialCsvImport() {
           })
           .then((d: { inserted?: number }) => {
             const n = d.inserted ?? rows.length;
-            setStatus(
-              `Saved ${n} purchase${n === 1 ? "" : "es"} from ${file.name}. Open CSV table in the nav to see the list and monthly totals.`
-            );
+            setStatus(`Saved ${n} row${n === 1 ? "" : "s"} from ${file.name}.`);
           })
           .catch(() => setError("Could not save to the API. Is it running on port 3002?"))
           .finally(() => setLoading(false));
@@ -59,25 +57,10 @@ export default function FinancialCsvImport() {
   }
 
   return (
-    <div className="tool-page" style={{ maxWidth: "36rem" }}>
+    <div>
       <h1 style={{ fontSize: "1.25rem", marginBottom: "1rem", fontWeight: 600 }}>
         Upload purchases CSV
       </h1>
-      <p
-        style={{
-          fontSize: "0.875rem",
-          color: "#64748b",
-          marginBottom: "1rem",
-          lineHeight: 1.55,
-        }}
-      >
-        No header row — the first line is a purchase. Columns:{" "}
-        <strong>A</strong> date, <strong>B</strong> price (negative = expense,
-        positive = income), <strong>C</strong> ignored (e.g. *). The description
-        is the <strong>first non-empty cell</strong> after column C (so if D is
-        blank and E has the merchant name, E is used). Rows append to the
-        database (re-upload duplicates unless you clear the DB).
-      </p>
       <label className="tool-label" htmlFor="fin-csv-file">
         CSV file
       </label>
@@ -94,19 +77,6 @@ export default function FinancialCsvImport() {
           e.target.value = "";
         }}
       />
-      <p
-        style={{
-          fontSize: "0.8rem",
-          color: "#94a3b8",
-          marginBottom: "1rem",
-          lineHeight: 1.5,
-        }}
-      >
-        To change how rows are interpreted or transformed before saving, edit{" "}
-        <code style={{ fontSize: "0.75rem" }}>shell/lib/preprocessPurchases.ts</code>{" "}
-        (<code>preprocessPurchaseRows</code>, <code>coerceDateToIso</code>,{" "}
-        <code>parsePriceCell</code>).
-      </p>
       {loading ? (
         <div className="tool-result">Saving…</div>
       ) : null}

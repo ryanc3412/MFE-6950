@@ -8,6 +8,7 @@ type Item = {
   item_date: string;
   price: number;
   comment: string;
+  category: string;
   created_at: string;
 };
 
@@ -62,11 +63,6 @@ export default function LedgerOverview() {
       <h1 style={{ fontSize: "1.25rem", marginBottom: "1rem", fontWeight: 600 }}>
         Purchases &amp; income
       </h1>
-      <p style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "1.25rem" }}>
-        Data comes from the database (upload on <strong>Upload CSV</strong>).
-        Negative amounts are expenses, positive are income. Monthly totals treat
-        expenses as positive “spent” for the expenses column.
-      </p>
 
       {loading ? <p style={{ color: "#64748b" }}>Loading…</p> : null}
       {error ? (
@@ -181,6 +177,7 @@ export default function LedgerOverview() {
                         #
                       </th>
                       <th style={{ padding: "0.5rem 0.75rem" }}>Date</th>
+                      <th style={{ padding: "0.5rem 0.75rem" }}>Category</th>
                       <th style={{ padding: "0.5rem 0.75rem" }}>Amount</th>
                       <th style={{ padding: "0.5rem 0.75rem" }}>Explanation</th>
                     </tr>
@@ -199,6 +196,9 @@ export default function LedgerOverview() {
                           {index + 1}
                         </td>
                         <td style={{ padding: "0.5rem 0.75rem" }}>{it.item_date}</td>
+                        <td style={{ padding: "0.5rem 0.75rem", color: "#334155" }}>
+                          {it.category || "other"}
+                        </td>
                         <td
                           style={{
                             padding: "0.5rem 0.75rem",

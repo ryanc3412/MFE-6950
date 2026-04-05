@@ -13,14 +13,30 @@ export type PurchaseRow = {
   item_date: string;
   price: number;
   comment: string;
+  category: string;
 };
 
-/** Strip currency clutter; returns null if not a usable number. */
+/**
+ * Strip currency clutter; returns null if not a usable number.
+ * Excel/Sheets often use Unicode minus (U+2212); Number("−19") is NaN — normalize to ASCII "-".
+ * Also supports accounting negatives: (19.50) → -19.5
+ */
 export function parsePriceCell(raw: string): number | null {
-  const t = raw.replace(/[$,\s]/g, "").trim();
+  let t = raw.replace(/[$,\s\u00a0\u2007\u202f]/g, "").trim();
+  t = t.replace(/[\u2212\u2012\u2013\u2014\uFE58\uFE63\uFF0D]/g, "-");
+
+  let negate = false;
+  if (/^\(.*\)$/.test(t)) {
+    negate = true;
+    t = t.slice(1, -1).replace(/[$,\s\u00a0\u2007\u202f]/g, "").trim();
+    t = t.replace(/[\u2212\u2012\u2013\u2014\uFE58\uFE63\uFF0D]/g, "-");
+  }
+
   if (t === "") return null;
   const n = Number(t);
-  return Number.isFinite(n) ? n : null;
+  if (!Number.isFinite(n)) return null;
+  const v = negate ? -Math.abs(n) : n;
+  return v;
 }
 
 /**
@@ -41,12 +57,11 @@ export function coerceDateToIso(raw: string): string | null {
 }
 
 /**
- * Column layout: 0 = date, 1 = price, 2 = ignored (e.g. *), then description.
- * Many exports leave the next column empty and put the merchant string one column
- * over (e.g. blank D, text in E). We use the first non-empty cell from index 3 onward.
+ * Columns: A=date, B=price, C=ignored (e.g. *), D=category, E+=description
+ * (first non-empty cell from column E onward).
  */
-function explanationFromCells(cells: string[]): string {
-  for (let i = 3; i < cells.length; i++) {
+function explanationAfterCategory(cells: string[]): string {
+  for (let i = 4; i < cells.length; i++) {
     const t = (cells[i] ?? "").trim();
     if (t !== "") return t;
   }
@@ -62,8 +77,9 @@ export function parseFinancialCsvText(text: string): PurchaseRow[] {
     const dateIso = coerceDateToIso(cells[0] ?? "");
     const price = parsePriceCell(cells[1] ?? "");
     if (dateIso === null || price === null) continue;
-    const comment = explanationFromCells(cells);
-    out.push({ item_date: dateIso, price, comment });
+    const category = (cells[3] ?? "").trim() || "other";
+    const comment = explanationAfterCategory(cells);
+    out.push({ item_date: dateIso, price, comment, category });
   }
   return out;
 }

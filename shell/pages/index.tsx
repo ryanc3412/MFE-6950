@@ -1,15 +1,10 @@
 import dynamic from "next/dynamic";
 
-const StoredItemsPanel = dynamic(
-  () => import("../components/StoredItemsPanel"),
+const CategoryMonthBreakdown = dynamic(
+  () => import("../components/CategoryMonthBreakdown"),
   { ssr: false }
 );
 
 export default function Home() {
-  return (
-    <>
-      <h1>Home</h1>
-      <StoredItemsPanel />
-    </>
-  );
+  return <CategoryMonthBreakdown />;
 }
