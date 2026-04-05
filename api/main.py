@@ -1,24 +1,39 @@
-from fastapi import FastAPI, Query, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-import os
+from contextlib import asynccontextmanager
+from datetime import date
+
 import httpx
+import os
 from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+
+from db import get_conn, init_db
 
 load_dotenv()
 
-app = FastAPI()
-
 FINNHUB_BASE = "https://finnhub.io/api/v1"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://localhost:3003",
+        "http://localhost:3004",
     ],
     allow_credentials=True,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -86,3 +101,129 @@ def stock(symbol: str = Query(..., description="Stock ticker symbol (e.g. AAPL)"
     if profile and isinstance(profile.get("name"), str):
         name = profile["name"]
     return {"symbol": sym, "name": name, "price": float(price)}
+
+
+def _normalize_item_date(raw: str) -> str:
+    s = raw.strip()
+    try:
+        date.fromisoformat(s)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail="item_date must be a calendar date in YYYY-MM-DD form.",
+        ) from e
+    return s
+
+
+class LedgerItemIn(BaseModel):
+    """One stored row: when it happened, how much, and a short explanation."""
+
+    item_date: str = Field(..., description="ISO date YYYY-MM-DD")
+    price: float
+    comment: str = Field(default="", max_length=4000)
+
+
+class BulkLedgerIn(BaseModel):
+    items: list[LedgerItemIn] = Field(default_factory=list)
+
+
+@app.get("/db/items")
+def list_ledger_items():
+    with get_conn() as conn:
+        cur = conn.execute(
+            """
+            SELECT id, item_date, price, comment, created_at
+            FROM ledger_items
+            ORDER BY item_date DESC, id DESC
+            """
+        )
+        rows = cur.fetchall()
+    return {
+        "items": [
+            {
+                "id": r[0],
+                "item_date": r[1],
+                "price": r[2],
+                "comment": r[3],
+                "created_at": r[4],
+            }
+            for r in rows
+        ]
+    }
+
+
+@app.post("/db/items")
+def create_ledger_item(body: LedgerItemIn):
+    item_date = _normalize_item_date(body.item_date)
+    comment = body.comment.strip()
+    with get_conn() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO ledger_items (item_date, price, comment)
+            VALUES (?, ?, ?)
+            """,
+            (item_date, body.price, comment),
+        )
+        conn.commit()
+        new_id = cur.lastrowid
+    return {
+        "id": new_id,
+        "item_date": item_date,
+        "price": body.price,
+        "comment": comment,
+    }
+
+
+@app.post("/db/items/bulk")
+def bulk_create_ledger_items(body: BulkLedgerIn):
+    if len(body.items) > 50_000:
+        raise HTTPException(
+            status_code=400,
+            detail="Too many rows in one request (max 50000).",
+        )
+    if not body.items:
+        return {"inserted": 0}
+    normalized: list[tuple[str, float, str]] = []
+    for it in body.items:
+        d = _normalize_item_date(it.item_date)
+        normalized.append((d, float(it.price), it.comment.strip()))
+    with get_conn() as conn:
+        conn.executemany(
+            """
+            INSERT INTO ledger_items (item_date, price, comment)
+            VALUES (?, ?, ?)
+            """,
+            normalized,
+        )
+        conn.commit()
+    return {"inserted": len(normalized)}
+
+
+@app.get("/db/items/summary/monthly")
+def monthly_ledger_summary():
+    """Per calendar month: sum of positive prices (income), sum of abs(negative) (expenses), net = sum of all signed prices."""
+    with get_conn() as conn:
+        cur = conn.execute(
+            """
+            SELECT
+              strftime('%Y-%m', item_date) AS month,
+              SUM(CASE WHEN price > 0 THEN price ELSE 0 END) AS income,
+              SUM(CASE WHEN price < 0 THEN -price ELSE 0 END) AS expenses,
+              SUM(price) AS net
+            FROM ledger_items
+            GROUP BY strftime('%Y-%m', item_date)
+            ORDER BY month DESC
+            """
+        )
+        rows = cur.fetchall()
+    return {
+        "months": [
+            {
+                "month": r[0],
+                "income": float(r[1] or 0),
+                "expenses": float(r[2] or 0),
+                "net": float(r[3] or 0),
+            }
+            for r in rows
+        ]
+    }

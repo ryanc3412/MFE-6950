@@ -6,6 +6,10 @@ services:
       - "3002:3002"
     env_file:
       - ./api/.env
+    environment:
+      SQLITE_PATH: /app/data/demo.db
+    volumes:
+      - ./api/data:/app/data
 
   remote-a:
     build:
@@ -28,6 +32,8 @@ services:
   shell:
     build:
       context: ./shell
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3002
     ports:
       - "3000:3000"
     depends_on:

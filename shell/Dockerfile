@@ -1,9 +1,12 @@
-FROM node:22-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
+ARG NEXT_PUBLIC_API_URL=http://localhost:3002
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Use Corepack to provide pnpm (no npm install -g to avoid EEXIST)
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 COPY package.json ./
 

@@ -7,3 +7,4 @@ __pycache__/
 .env
 .env*.local
 .docker-tmp/
+api/data/*.db

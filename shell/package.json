@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "NEXT_PRIVATE_LOCAL_WEBPACK=true next dev --port 3000",
-    "build": "next build",
+    "build": "NEXT_PRIVATE_LOCAL_WEBPACK=true next build",
     "start": "next start"
   },
   "dependencies": {
-    "@module-federation/nextjs-mf": "^8.8.55",
+    "@module-federation/nextjs-mf": "8.8.55",
     "next": "15.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
