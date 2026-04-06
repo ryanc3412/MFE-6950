@@ -14,3 +14,14 @@ declare module "remote_b/StockPrice" {
   const Component: React.ComponentType;
   export default Component;
 }
+
+declare module "remote_b/LedgerPieCharts" {
+  type PieSlice = { label: string; value: number };
+  const Component: React.ComponentType<{
+    expenseSlices?: PieSlice[];
+    incomeSlices?: PieSlice[];
+    totalExpenses?: number;
+    totalIncome?: number;
+  }>;
+  export default Component;
+}

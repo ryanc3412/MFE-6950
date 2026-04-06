@@ -1,7 +1,18 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiBase } from "../lib/apiBase";
+
+const LedgerPieCharts = dynamic(
+  () => import("remote_b/LedgerPieCharts").then((m) => m.default),
+  {
+    ssr: false,
+    loading: () => (
+      <p style={{ color: "#94a3b8", fontSize: "0.875rem" }}>Loading charts…</p>
+    ),
+  }
+);
 
 type CatRow = {
   month: string;
@@ -12,29 +23,8 @@ type CatRow = {
 };
 
 type TabId =
-  | { kind: "all" }
   | { kind: "year"; year: string }
   | { kind: "month"; month: string };
-
-const PIE_SIZE = 300;
-const PIE_CX = PIE_SIZE / 2;
-const PIE_CY = PIE_SIZE / 2;
-const PIE_R = PIE_SIZE / 2 - 28;
-
-const PIE_COLORS = [
-  "#9ec5e8",
-  "#f0b8bc",
-  "#b5dfc4",
-  "#f5e0a8",
-  "#d4c4f0",
-  "#a8dce8",
-  "#f0d4b8",
-  "#e8c4d8",
-  "#c4d4f0",
-  "#b8ece0",
-  "#e0c8f0",
-  "#c8e8d4",
-];
 
 function fmtMoney(n: number) {
   const sign = n < 0 ? "−" : "";
@@ -54,14 +44,15 @@ function uniqueMonths(rows: CatRow[]): string[] {
 }
 
 function filterRowsForTab(rows: CatRow[], tab: TabId): CatRow[] {
-  if (tab.kind === "all") return rows;
   if (tab.kind === "year") {
     return rows.filter((r) => r.month.startsWith(`${tab.year}-`));
   }
   return rows.filter((r) => r.month === tab.month);
 }
 
-function aggregateNetByCategory(rows: CatRow[]): { category: string; net: number }[] {
+function aggregateNetByCategory(
+  rows: CatRow[]
+): { category: string; net: number }[] {
   const m = new Map<string, number>();
   for (const r of rows) {
     m.set(r.category, (m.get(r.category) ?? 0) + r.net);
@@ -106,257 +97,17 @@ function grandTotals(rows: CatRow[]) {
   return { income, expenses };
 }
 
-function parseTabKey(key: string): TabId {
-  if (key === "all") return { kind: "all" };
+function parseTabKey(key: string): TabId | null {
   if (key.startsWith("year:")) return { kind: "year", year: key.slice(5) };
-  return { kind: "month", month: key.slice(6) };
-}
-
-function CategoryPieChart({
-  title,
-  slices,
-  emptyMessage,
-  sideLabel,
-  sideTotal,
-}: {
-  title: string;
-  slices: { label: string; value: number }[];
-  emptyMessage: string;
-  sideLabel: string;
-  sideTotal: number;
-}) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const sliceTotal = slices.reduce((s, x) => s + x.value, 0);
-
-  if (sliceTotal <= 0) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "flex-start",
-          gap: "1.25rem",
-        }}
-      >
-        <div style={{ width: PIE_SIZE }}>
-          <h3
-            style={{
-              fontSize: "0.95rem",
-              marginBottom: "0.5rem",
-              fontWeight: 600,
-              color: "#334155",
-            }}
-          >
-            {title}
-          </h3>
-          <p style={{ fontSize: "0.8rem", color: "#94a3b8" }}>{emptyMessage}</p>
-        </div>
-        <div style={{ paddingTop: "1.75rem" }}>
-          <div
-            style={{
-              fontSize: "0.7rem",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-              color: "#94a3b8",
-              marginBottom: "0.25rem",
-            }}
-          >
-            {sideLabel}
-          </div>
-          <div
-            style={{
-              fontSize: "1.35rem",
-              fontWeight: 600,
-              color: "#475569",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {fmtMoney(sideTotal)}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  let ang = -Math.PI / 2;
-  const dimOthers = hoveredIndex !== null;
-
-  const paths = slices.map((slice, i) => {
-    const frac = slice.value / sliceTotal;
-    const a0 = ang;
-    const a1 = ang + frac * 2 * Math.PI;
-    ang = a1;
-    const x0 = PIE_CX + PIE_R * Math.cos(a0);
-    const y0 = PIE_CY + PIE_R * Math.sin(a0);
-    const x1 = PIE_CX + PIE_R * Math.cos(a1);
-    const y1 = PIE_CY + PIE_R * Math.sin(a1);
-    const large = frac > 0.5 ? 1 : 0;
-    const d = `M ${PIE_CX} ${PIE_CY} L ${x0} ${y0} A ${PIE_R} ${PIE_R} 0 ${large} 1 ${x1} ${y1} Z`;
-    return (
-      <path
-        key={`${slice.label}-${i}`}
-        d={d}
-        fill={PIE_COLORS[i % PIE_COLORS.length]}
-        stroke="#f8fafc"
-        strokeWidth={2}
-        style={{
-          cursor: "pointer",
-          opacity: dimOthers && hoveredIndex !== i ? 0.42 : 1,
-          transition: "opacity 0.12s ease",
-        }}
-        onMouseEnter={() => setHoveredIndex(i)}
-      >
-        <title>{`${slice.label}: ${fmtMoney(slice.value)}`}</title>
-      </path>
-    );
-  });
-
-  const hi = hoveredIndex !== null ? slices[hoveredIndex] : null;
-  const hiPct =
-    hi !== null ? ((hi.value / sliceTotal) * 100).toFixed(1) : "";
-
-  const vb = PIE_SIZE;
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        alignItems: "flex-start",
-        gap: "1.25rem 1.75rem",
-      }}
-    >
-      <div>
-        <h3
-          style={{
-            fontSize: "0.95rem",
-            marginBottom: "0.5rem",
-            fontWeight: 600,
-            color: "#334155",
-          }}
-        >
-          {title}
-        </h3>
-        <div style={{ position: "relative", width: PIE_SIZE }}>
-          {hi ? (
-            <div
-              style={{
-                position: "absolute",
-                left: "50%",
-                top: 8,
-                transform: "translateX(-50%)",
-                background: "#334155",
-                color: "#f8fafc",
-                padding: "8px 12px",
-                borderRadius: 8,
-                fontSize: 12,
-                lineHeight: 1.35,
-                pointerEvents: "none",
-                zIndex: 2,
-                boxShadow: "0 4px 14px rgba(15,23,42,0.12)",
-                textAlign: "center",
-                maxWidth: 220,
-              }}
-            >
-              <div style={{ fontWeight: 600 }}>{hi.label}</div>
-              <div style={{ fontVariantNumeric: "tabular-nums" }}>
-                {fmtMoney(hi.value)}
-                <span style={{ color: "#cbd5e1", marginLeft: 6 }}>
-                  ({hiPct}%)
-                </span>
-              </div>
-            </div>
-          ) : null}
-          <svg
-            width={PIE_SIZE}
-            height={PIE_SIZE}
-            viewBox={`0 0 ${vb} ${vb}`}
-            onMouseLeave={() => setHoveredIndex(null)}
-            style={{ display: "block" }}
-          >
-            {paths}
-          </svg>
-        </div>
-        <ul
-          style={{
-            listStyle: "none",
-            padding: 0,
-            margin: "0.6rem 0 0",
-            fontSize: "0.78rem",
-            maxWidth: PIE_SIZE + 40,
-          }}
-        >
-          {slices.map((s, i) => (
-            <li
-              key={s.label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.35rem",
-                marginBottom: "0.3rem",
-                flexWrap: "wrap",
-              }}
-            >
-              <span
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 3,
-                  flexShrink: 0,
-                  background: PIE_COLORS[i % PIE_COLORS.length],
-                }}
-              />
-              <span style={{ flex: "1 1 auto", minWidth: 0 }}>{s.label}</span>
-              <span
-                style={{
-                  color: "#64748b",
-                  fontVariantNumeric: "tabular-nums",
-                }}
-              >
-                {((s.value / sliceTotal) * 100).toFixed(0)}%
-              </span>
-              <span style={{ fontVariantNumeric: "tabular-nums" }}>
-                {fmtMoney(s.value)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div style={{ paddingTop: "1.75rem", minWidth: 130 }}>
-        <div
-          style={{
-            fontSize: "0.7rem",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.04em",
-            color: "#94a3b8",
-            marginBottom: "0.35rem",
-          }}
-        >
-          {sideLabel}
-        </div>
-        <div
-          style={{
-            fontSize: "1.45rem",
-            fontWeight: 600,
-            color: "#475569",
-            fontVariantNumeric: "tabular-nums",
-            lineHeight: 1.2,
-          }}
-        >
-          {fmtMoney(sideTotal)}
-        </div>
-      </div>
-    </div>
-  );
+  if (key.startsWith("month:")) return { kind: "month", month: key.slice(6) };
+  return null;
 }
 
 export default function CategoryMonthBreakdown() {
   const [rows, setRows] = useState<CatRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tabKey, setTabKey] = useState<string>("all");
+  const [tabKey, setTabKey] = useState<string>("");
 
   const load = useCallback(() => {
     setError(null);
@@ -382,7 +133,7 @@ export default function CategoryMonthBreakdown() {
   const tabDefs = useMemo(() => {
     const years = uniqueYears(rows);
     const months = uniqueMonths(rows);
-    const out: { key: string; label: string }[] = [{ key: "all", label: "All" }];
+    const out: { key: string; label: string }[] = [];
     for (const y of years) {
       out.push({ key: `year:${y}`, label: `${y} (year)` });
     }
@@ -393,16 +144,26 @@ export default function CategoryMonthBreakdown() {
   }, [rows]);
 
   useEffect(() => {
-    if (tabDefs.length === 0) return;
-    const valid = new Set(tabDefs.map((t) => t.key));
-    if (!valid.has(tabKey)) setTabKey("all");
-  }, [tabDefs, tabKey]);
+    if (rows.length === 0 || tabDefs.length === 0) return;
+    const validKeys = new Set(tabDefs.map((t) => t.key));
+    const needReset = tabKey === "" || !validKeys.has(tabKey);
+    if (!needReset) return;
+    const years = uniqueYears(rows);
+    if (years.length > 0) {
+      setTabKey(`year:${years[0]}`);
+      return;
+    }
+    const months = uniqueMonths(rows);
+    if (months.length > 0) {
+      setTabKey(`month:${months[0]}`);
+    }
+  }, [rows, tabDefs, tabKey]);
 
   const activeTab = parseTabKey(tabKey);
-  const filteredRows = useMemo(
-    () => filterRowsForTab(rows, activeTab),
-    [rows, activeTab]
-  );
+  const filteredRows = useMemo(() => {
+    if (!activeTab) return [];
+    return filterRowsForTab(rows, activeTab);
+  }, [rows, activeTab]);
 
   const tableRows = useMemo(
     () => aggregateNetByCategory(filteredRows),
@@ -417,6 +178,7 @@ export default function CategoryMonthBreakdown() {
   const totals = useMemo(() => grandTotals(filteredRows), [filteredRows]);
 
   const hasData = rows.length > 0;
+  const ready = hasData && activeTab !== null;
 
   return (
     <div style={{ marginTop: "0.5rem", maxWidth: "90rem" }}>
@@ -446,7 +208,7 @@ export default function CategoryMonthBreakdown() {
       {!loading && !error && !hasData ? (
         <p style={{ color: "#64748b", fontSize: "0.9rem" }}>No data yet.</p>
       ) : null}
-      {!loading && !error && hasData ? (
+      {!loading && !error && ready ? (
         <>
           <div
             style={{
@@ -515,11 +277,9 @@ export default function CategoryMonthBreakdown() {
                   color: "#0f172a",
                 }}
               >
-                {activeTab.kind === "all"
-                  ? "All categories (net)"
-                  : activeTab.kind === "year"
-                    ? `${activeTab.year} — categories (net)`
-                    : `${activeTab.month} — categories (net)`}
+                {activeTab.kind === "year"
+                  ? `${activeTab.year} — categories (net)`
+                  : `${activeTab.month} — categories (net)`}
               </h2>
               {tableRows.length === 0 ? (
                 <p style={{ color: "#94a3b8", fontSize: "0.875rem" }}>
@@ -577,28 +337,12 @@ export default function CategoryMonthBreakdown() {
               )}
             </div>
 
-            <div
-              style={{
-                flex: "1 1 420px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "2.25rem",
-                paddingTop: "0.15rem",
-              }}
-            >
-              <CategoryPieChart
-                title="Expenses by category"
-                slices={pieAggregates.expenseSlices}
-                emptyMessage="No expenses in this range."
-                sideLabel="Total expenses"
-                sideTotal={totals.expenses}
-              />
-              <CategoryPieChart
-                title="Income by category"
-                slices={pieAggregates.incomeSlices}
-                emptyMessage="No income in this range."
-                sideLabel="Total income"
-                sideTotal={totals.income}
+            <div style={{ flex: "1 1 420px" }}>
+              <LedgerPieCharts
+                expenseSlices={pieAggregates.expenseSlices}
+                incomeSlices={pieAggregates.incomeSlices}
+                totalExpenses={totals.expenses}
+                totalIncome={totals.income}
               />
             </div>
           </div>

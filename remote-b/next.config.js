@@ -11,6 +11,7 @@ const nextConfig = {
         exposes: {
           './CsvUpload': './components/CsvUpload.js',
           './StockPrice': './components/StockPrice.js',
+          './LedgerPieCharts': './components/LedgerPieCharts.js',
         },
         shared: {},
       })
