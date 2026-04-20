@@ -1,0 +1,30 @@
+/* Bundled with federated TransactionEngine — shell does not load remote-a/globals.css */
+
+/* Spending matrix: horizontal + vertical scroll, Bitcoin-themed bars */
+.matrixScroll {
+  max-width: 100%;
+  max-height: min(70vh, 720px);
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(247, 147, 26, 0.85) rgba(255, 255, 255, 0.07);
+}
+
+.matrixScroll::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.matrixScroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.matrixScroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #ea580c, #f7931a);
+  border-radius: 8px;
+  border: 2px solid rgba(15, 17, 21, 0.85);
+}
+
+.matrixScroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #f7931a, #ffd600);
+}

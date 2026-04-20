@@ -1,43 +1,133 @@
+# Node services use a one-off `pnpm-install` so:
+# - Host bind-mount does not reuse your machine's node_modules / pnpm store (fixes ERR_PNPM_UNEXPECTED_STORE)
+# - Only one install runs (no parallel pnpm races)
+#
+# Copy .env.example → .env at repo root for OPENAI_API_KEY / FINNHUB_API_KEY.
+
 services:
+  # SQLite file lives on named volume finance_api_data (mounted at /app/data),
+  # so transactions + Command Center (sub_accounts) survive container stop/restart.
+  # Avoid `docker compose down -v` unless you intend to wipe that volume.
   api:
-    build:
-      context: ./api
+    build: ./api
     ports:
       - "3002:3002"
-    env_file:
-      - ./api/.env
+    volumes:
+      - ./api:/app
+      - finance_api_data:/app/data
     environment:
       SQLITE_PATH: /app/data/demo.db
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      FINNHUB_API_KEY: ${FINNHUB_API_KEY:-}
+    command: >
+      uvicorn main:app --host 0.0.0.0 --port 3002 --reload
+
+  pnpm-install:
+    image: node:22-bookworm-slim
+    working_dir: /repo
     volumes:
-      - ./api/data:/app/data
-
-  remote-a:
-    build:
-      context: ./remote-a
-    ports:
-      - "3001:3001"
-
-  remote-b:
-    build:
-      context: ./remote-b
-    ports:
-      - "3003:3003"
-
-  remote-vue:
-    build:
-      context: ./remote-vue
-    ports:
-      - "3004:3004"
+      - .:/repo
+      - pnpm_store:/pnpm-store
+      - node_modules_root:/repo/node_modules
+      - node_modules_shell:/repo/shell/node_modules
+      - node_modules_remote_a:/repo/remote-a/node_modules
+      - node_modules_remote_b:/repo/remote-b/node_modules
+      - node_modules_remote_vue:/repo/remote-vue/node_modules
+    environment:
+      CI: "true"
+      PNPM_STORE_DIR: /pnpm-store
+    command: >
+      sh -c "corepack enable && corepack prepare pnpm@9.15.0 --activate &&
+      cd /repo && pnpm install"
 
   shell:
-    build:
-      context: ./shell
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost:3002
+    image: node:22-bookworm-slim
+    working_dir: /repo
+    volumes:
+      - .:/repo
+      - pnpm_store:/pnpm-store
+      - node_modules_root:/repo/node_modules
+      - node_modules_shell:/repo/shell/node_modules
+      - node_modules_remote_a:/repo/remote-a/node_modules
+      - node_modules_remote_b:/repo/remote-b/node_modules
+      - node_modules_remote_vue:/repo/remote-vue/node_modules
     ports:
       - "3000:3000"
+    environment:
+      CI: "true"
+      PNPM_STORE_DIR: /pnpm-store
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_API_URL: http://localhost:3002
+      NEXT_PUBLIC_REMOTE_A_URL: http://localhost:3001
+      NEXT_PUBLIC_REMOTE_B_URL: http://localhost:3003
+    command: >
+      sh -c "corepack enable && corepack prepare pnpm@9.15.0 --activate &&
+      cd /repo && NEXT_PRIVATE_LOCAL_WEBPACK=true pnpm --filter shell exec next dev --port 3000 --hostname 0.0.0.0"
     depends_on:
-      - api
-      - remote-a
-      - remote-b
-      - remote-vue
+      api:
+        condition: service_started
+      pnpm-install:
+        condition: service_completed_successfully
+
+  remote-a:
+    image: node:22-bookworm-slim
+    working_dir: /repo
+    volumes:
+      - .:/repo
+      - pnpm_store:/pnpm-store
+      - node_modules_root:/repo/node_modules
+      - node_modules_shell:/repo/shell/node_modules
+      - node_modules_remote_a:/repo/remote-a/node_modules
+      - node_modules_remote_b:/repo/remote-b/node_modules
+      - node_modules_remote_vue:/repo/remote-vue/node_modules
+    ports:
+      - "3001:3001"
+    environment:
+      CI: "true"
+      PNPM_STORE_DIR: /pnpm-store
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_API_URL: http://localhost:3002
+    command: >
+      sh -c "corepack enable && corepack prepare pnpm@9.15.0 --activate &&
+      cd /repo && NEXT_PRIVATE_LOCAL_WEBPACK=true pnpm --filter remote-a exec next dev --port 3001 --hostname 0.0.0.0"
+    depends_on:
+      api:
+        condition: service_started
+      pnpm-install:
+        condition: service_completed_successfully
+
+  remote-b:
+    image: node:22-bookworm-slim
+    working_dir: /repo
+    volumes:
+      - .:/repo
+      - pnpm_store:/pnpm-store
+      - node_modules_root:/repo/node_modules
+      - node_modules_shell:/repo/shell/node_modules
+      - node_modules_remote_a:/repo/remote-a/node_modules
+      - node_modules_remote_b:/repo/remote-b/node_modules
+      - node_modules_remote_vue:/repo/remote-vue/node_modules
+    ports:
+      - "3003:3003"
+    environment:
+      CI: "true"
+      PNPM_STORE_DIR: /pnpm-store
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_API_URL: http://localhost:3002
+    command: >
+      sh -c "corepack enable && corepack prepare pnpm@9.15.0 --activate &&
+      cd /repo && NEXT_PRIVATE_LOCAL_WEBPACK=true pnpm --filter remote-b exec next dev --port 3003 --hostname 0.0.0.0"
+    depends_on:
+      api:
+        condition: service_started
+      pnpm-install:
+        condition: service_completed_successfully
+
+volumes:
+  finance_api_data:
+  pnpm_store:
+  node_modules_root:
+  node_modules_shell:
+  node_modules_remote_a:
+  node_modules_remote_b:
+  node_modules_remote_vue:

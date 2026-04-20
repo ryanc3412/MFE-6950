@@ -1,9 +1,15 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+:root {
+  --void: #030304;
+  --surface: #0f1115;
+  --btc-orange: #f7931a;
+  --btc-gold: #ffd600;
+}
 
 html,
 body {
@@ -12,9 +18,7 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  @apply min-h-screen bg-void font-body text-white antialiased;
 }
 
 * {
@@ -28,130 +32,110 @@ a {
   text-decoration: none;
 }
 
-/* Shared layout for remote tool pages (square number, character count, stock) */
-.tool-page {
-  padding: 2rem;
-  max-width: 28rem;
-  margin: 0 auto;
-  font-family: inherit;
+@layer utilities {
+  .bg-grid-fade {
+    background-size: 50px 50px;
+    background-image:
+      linear-gradient(to right, rgba(30, 41, 59, 0.45) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(30, 41, 59, 0.45) 1px, transparent 1px);
+    mask-image: radial-gradient(
+      circle at center,
+      black 35%,
+      transparent 75%
+    );
+    -webkit-mask-image: radial-gradient(
+      circle at center,
+      black 35%,
+      transparent 75%
+    );
+  }
+
+  .text-gradient-btc {
+    @apply bg-gradient-to-r from-btc-burnt to-btc-orange bg-clip-text text-transparent;
+  }
+
+  .text-gradient-value {
+    @apply bg-gradient-to-r from-btc-orange to-btc-gold bg-clip-text text-transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .motion-safe-animate-float {
+      animation: none !important;
+    }
+    .motion-safe-animate-spin {
+      animation: none !important;
+    }
+  }
 }
 
-.tool-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-  letter-spacing: 0.01em;
-}
+@layer components {
+  .btc-container {
+    @apply mx-auto max-w-7xl px-4;
+  }
 
-.tool-input {
-  display: block;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background-color: #fff;
-  color: #111827;
-  font-family: inherit;
-  font-size: 1rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
+  .btc-card {
+    @apply rounded-2xl border border-white/10 bg-surface p-6 shadow-card-ambient transition-all duration-300;
+  }
 
-.tool-input:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
+  .btc-card-interactive {
+    @apply btc-card hover:-translate-y-1 hover:border-btc-orange/50 hover:shadow-card-hover;
+  }
 
-.tool-button {
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: #fff;
-  background-color: #2563eb;
-  border: none;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.05s ease;
-}
+  .btc-btn-primary {
+    @apply min-h-[44px] rounded-full bg-gradient-to-r from-btc-burnt to-btc-orange px-6 py-2.5 font-body text-xs font-bold uppercase tracking-wider text-white shadow-glow-orange transition-all duration-300;
+  }
+  .btc-btn-primary:hover {
+    @apply scale-105 shadow-glow-orange-lg;
+  }
+  .btc-btn-primary:focus-visible {
+    @apply outline-none ring-2 ring-btc-orange ring-offset-2 ring-offset-void;
+  }
 
-.tool-button:hover:not(:disabled) {
-  background-color: #1d4ed8;
-}
+  .btc-btn-secondary {
+    @apply min-h-[44px] rounded-full border-2 border-white/20 bg-transparent px-6 py-2.5 font-body text-xs font-semibold uppercase tracking-wider text-white transition-all duration-300;
+  }
+  .btc-btn-secondary:hover {
+    @apply border-white bg-white/10;
+  }
+  .btc-btn-secondary:focus-visible {
+    @apply outline-none ring-2 ring-btc-orange ring-offset-2 ring-offset-void;
+  }
 
-.tool-button:active:not(:disabled) {
-  transform: translateY(1px);
-}
+  .btc-btn-ghost {
+    @apply min-h-[44px] rounded-full px-4 py-2 font-body text-xs font-medium uppercase tracking-wider text-white transition-colors duration-200;
+  }
+  .btc-btn-ghost:hover {
+    @apply bg-white/10 text-btc-orange;
+  }
 
-.tool-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
+  .btc-input {
+    @apply h-12 w-full rounded-lg border-0 border-b-2 border-white/20 bg-black/50 px-4 py-2 font-mono text-sm text-white placeholder:text-white/30 focus-visible:border-btc-orange focus-visible:shadow-[0_10px_20px_-10px_rgba(247,147,26,0.3)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50;
+  }
 
-.tool-result {
-  margin-top: 1.5rem;
-  padding: 1rem 1.25rem;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  color: #0f172a;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-}
+  .btc-kicker {
+    @apply font-mono text-xs uppercase tracking-widest text-stardust;
+  }
 
-.tool-error {
-  margin-top: 1.5rem;
-  padding: 1rem 1.25rem;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #b91c1c;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-}
+  .btc-link {
+    @apply text-btc-orange underline decoration-2 underline-offset-4 transition-colors hover:text-btc-gold;
+  }
 
-.tool-list {
-  margin-top: 1.5rem;
-}
-
-.tool-list-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 0.75rem;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.tool-list-items {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.tool-list-item {
-  padding: 1rem 1.25rem;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.tool-list-name {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.25rem;
-}
-
-.tool-list-price {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.02em;
+  .tool-page {
+    @apply btc-container py-8;
+  }
+  .tool-label {
+    @apply btc-kicker mb-2 block;
+  }
+  .tool-input {
+    @apply btc-input mb-4;
+  }
+  .tool-button {
+    @apply btc-btn-primary;
+  }
+  .tool-result {
+    @apply mt-6 rounded-2xl border border-white/10 bg-surface/80 p-4 font-body text-sm text-white backdrop-blur-sm;
+  }
+  .tool-error {
+    @apply mt-6 rounded-xl border-2 border-btc-orange/80 bg-btc-burnt/10 p-4 font-body text-sm text-btc-orange;
+  }
 }

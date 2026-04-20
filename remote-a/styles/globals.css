@@ -1,7 +1,8 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 html,
 body {
@@ -10,12 +11,26 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  @apply min-h-screen bg-void font-body text-white antialiased;
 }
 
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+@layer utilities {
+  .text-gradient-btc {
+    @apply bg-gradient-to-r from-btc-burnt to-btc-orange bg-clip-text text-transparent;
+  }
+  .text-gradient-value {
+    @apply bg-gradient-to-r from-btc-orange to-btc-gold bg-clip-text text-transparent;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply rounded-2xl border border-white/10 bg-surface/90 p-6 shadow-card-ambient backdrop-blur-md transition-all duration-300 hover:border-btc-orange/40 hover:shadow-card-hover;
+  }
 }

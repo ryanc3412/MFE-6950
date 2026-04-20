@@ -8,3 +8,20 @@ __pycache__/
 .env*.local
 .docker-tmp/
 api/data/*.db
+*.db-wal
+*.db-shm
+
+# Local pnpm store if created at repo root (e.g. tooling / mistaken PNPM_STORE_DIR)
+.pnpm-store/
+
+# TypeScript incremental build caches
+*.tsbuildinfo
+
+# OS / tooling noise
+.DS_Store
+
+# Python tests / coverage (if you add them later)
+.pytest_cache/
+.coverage
+htmlcov/
+*.log

@@ -1,5 +1,9 @@
-import CsvTable from "../components/CsvTable";
+import TransactionEngine from "../components/TransactionEngine";
 
 export default function Home() {
-  return <CsvTable />;
+  return (
+    <div className="p-6">
+      <TransactionEngine />
+    </div>
+  );
 }

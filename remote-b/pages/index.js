@@ -1,5 +1,9 @@
-import CsvUpload from "../components/CsvUpload";
+import Watchlist from "../components/Watchlist";
 
 export default function Home() {
-  return <CsvUpload />;
+  return (
+    <div className="p-6">
+      <Watchlist />
+    </div>
+  );
 }

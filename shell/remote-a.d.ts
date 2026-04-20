@@ -1,8 +1,4 @@
-declare module "remote_a/CsvTable" {
-  const Component: React.ComponentType<{
-    headers?: string[];
-    rows?: string[][];
-    fileName?: string | null;
-  }>;
+declare module "remote_a/TransactionEngine" {
+  const Component: React.ComponentType;
   export default Component;
 }

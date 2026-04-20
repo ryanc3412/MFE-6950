@@ -1,10 +1,5 @@
-import dynamic from "next/dynamic";
-
-const CategoryMonthBreakdown = dynamic(
-  () => import("../components/CategoryMonthBreakdown"),
-  { ssr: false }
-);
+import GlobalOverview from "../components/GlobalOverview";
 
 export default function Home() {
-  return <CategoryMonthBreakdown />;
+  return <GlobalOverview />;
 }
