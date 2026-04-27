@@ -1,222 +1,118 @@
 # Minimal Micro-Frontend (MFE) Demo
 
-This project is a class demo of microfrontends:
-- Next.js **host shell** that composes remote apps at runtime.
-- Next.js **remote-a** and **remote-b** via Module Federation.
-- Vue 3 **remote-vue** loaded by the shell from `remoteEntry.js`.
-- FastAPI backend for transactions, watchlist, and quotes.
+This project is intended to run through Docker for a smooth, reproducible setup on a fresh machine.
 
-This README is written as a **professor setup guide** so a first-time machine can run the app smoothly.
-
-## What Runs Where
+## Architecture and Ports
 
 ```text
 shell       -> http://localhost:3000  (host app)
 remote-a    -> http://localhost:3001  (transactions remote)
 api         -> http://localhost:3002  (FastAPI backend)
 remote-b    -> http://localhost:3003  (watchlist remote)
-remote-vue  -> http://localhost:3004  (Vue Hello World remote)
+remote-vue  -> http://localhost:3004  (Vue Hello World remote, started separately)
 ```
 
-## Option 1 (Recommended): Local Dev (No Docker)
+## Prerequisites
 
-Use this for easiest grading/demo flow. It guarantees all pages, including Vue Hello World, work.
-
-### 1) Prerequisites
-
-- Node `22.x` recommended (works with current scripts and Docker config).
-- `pnpm` `9.15.0` (project package manager).
-- Python `3.12` recommended.
+- Docker Desktop (or Docker Engine) installed.
+- `docker compose` available.
 
 Quick checks:
 
 ```bash
-node -v
-pnpm -v
-python --version
+docker --version
+docker compose version
 ```
 
-If `pnpm` is missing:
-
-```bash
-corepack enable
-corepack prepare pnpm@9.15.0 --activate
-```
-
-### 2) Clone and install
+## Docker-Only Quick Start (Recommended)
 
 From repo root:
 
-```bash
-pnpm install
-```
-
-Install API dependencies:
-
-```bash
-cd api
-python -m pip install -r requirements.txt
-cd ..
-```
-
-### 3) Environment setup (important)
-
-Create API env file from example:
-
-```bash
-cp api/.env.example api/.env
-```
-
-Edit `api/.env`:
-- `OPENAI_API_KEY`: optional (CSV categorization uses fallback if missing).
-- `FINNHUB_API_KEY`: optional but needed for live stock quotes.
-
-If keys are not set:
-- Transactions still import (fallback categorization).
-- Watchlist still works, but live quote features may be stale/unavailable.
-
-### 4) Start services (5 terminals)
-
-From repo root:
-
-Terminal 1 (API):
-```bash
-pnpm run dev:api
-```
-
-Terminal 2 (remote-a):
-```bash
-pnpm run dev:remote-a
-```
-
-Terminal 3 (remote-b):
-```bash
-pnpm run dev:remote-b
-```
-
-Terminal 4 (remote-vue federation preview):
-```bash
-pnpm run dev:remote-vue:fed
-```
-
-Terminal 5 (shell):
-```bash
-pnpm run dev:shell
-```
-
-### 5) Verify app is healthy
-
-Open `http://localhost:3000`.
-
-Check these pages:
-- `Command Center`
-- `Transactions` (remote-a)
-- `Market Watch` (remote-b)
-- `Hello World (Vue)` (remote-vue)
-
-If all four work, the setup is complete.
-
----
-
-## Option 2: Docker Compose (Mostly One-Command)
-
-This is good for quick startup, but note one important limitation:
-- Current `docker-compose.yml` starts `shell`, `remote-a`, `remote-b`, and `api`.
-- It does **not** start `remote-vue`.
-- Therefore, `Hello World (Vue)` route will not work unless `remote-vue` is run separately.
-
-### 1) Prerequisites
-
-- Docker Desktop (or Docker Engine) with `docker compose`.
-
-### 2) Environment file at repo root
-
-Create root env file:
+### 1) Create environment file
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set:
-- `OPENAI_API_KEY` (optional)
-- `FINNHUB_API_KEY` (optional but needed for live quotes)
+Optional but recommended:
+- set `FINNHUB_API_KEY` for live stock quotes.
+- set `OPENAI_API_KEY` for LLM transaction categorization.
 
-### 3) Build and start
+If keys are left as placeholders:
+- app still runs,
+- stock quotes may be stale/unavailable,
+- CSV categorization uses fallback rules.
+
+### 2) Build and start core services
 
 ```bash
 docker compose build
-docker compose up
-```
-
-Or detached:
-
-```bash
 docker compose up -d
 ```
 
-### 4) Open the app
+This starts:
+- `shell` (3000)
+- `remote-a` (3001)
+- `api` (3002)
+- `remote-b` (3003)
 
-Go to `http://localhost:3000`.
+### 3) Start Vue remote in Docker (for Hello World page)
 
-Working routes with compose-only startup:
+Current `docker-compose.yml` does not include `remote-vue`, so run it as a separate Docker container:
+
+```bash
+docker build -t mfe-remote-vue ./remote-vue
+docker run --rm -p 3004:3004 mfe-remote-vue
+```
+
+Keep this terminal running while demoing `Hello World (Vue)`.
+
+### 4) Open and verify
+
+Open `http://localhost:3000` and verify:
 - `Command Center`
 - `Transactions`
 - `Market Watch`
+- `Hello World (Vue)`
 
-`Hello World (Vue)` requires extra step (next section).
+### 5) Populate demo transaction data (recommended)
 
-### 5) Optional: run Vue remote alongside Docker
+To preload transaction data for the class demo:
 
-In a separate local terminal (repo root):
+1. Open `http://localhost:3000/transactions`
+2. In **Upload transactions (CSV)**, choose:
+   - `dummy_transactions_jan_to_apr.csv` (from the repo root)
+3. Wait for the import success message.
 
-```bash
-pnpm install
-pnpm run dev:remote-vue:fed
-```
+After upload, you should see populated data in:
+- spending matrix on `Transactions`
+- recent transactions table
+- related account/summary views in the shell.
 
-Now the `Hello World (Vue)` page should load at `http://localhost:3000/hello-world`.
+## Stop / Cleanup
 
-### 6) Stop and cleanup
+Stop compose stack:
 
 ```bash
 docker compose down
 ```
 
-Data note:
-- SQLite data is stored in Docker volume `finance_api_data`.
-- `docker compose down` keeps that data.
-- `docker compose down -v` deletes the volume and wipes persisted data.
+Stop Vue remote container:
+- press `Ctrl+C` in the terminal where `docker run ...` is active.
 
----
+Data persistence notes:
+- SQLite data is persisted on Docker volume `finance_api_data`.
+- `docker compose down` keeps data.
+- `docker compose down -v` removes volumes and deletes persisted DB data.
 
-## Common Issues and Fixes
+## Troubleshooting
 
-### 1) Shell loads but remote pages fail
+### Docker credential helper error (WSL/Linux)
 
-Cause: one or more remotes not running.
+If `docker compose build` fails with:
+`docker-credential-desktop.exe: exec format error`
 
-Fix:
-- Ensure ports `3001`, `3003`, and `3004` are active when using local dev.
-- In Docker-only mode, remember `3004` is not included unless run separately.
-
-### 2) Quote data missing / stock errors
-
-Cause: `FINNHUB_API_KEY` missing or invalid.
-
-Fix:
-- Add a valid key to `api/.env` (local dev) or `.env` (docker compose).
-- Restart API service.
-
-### 3) CSV import works but AI category quality is basic
-
-Cause: no `OPENAI_API_KEY`; fallback categorizer is used.
-
-Fix:
-- Add `OPENAI_API_KEY` and restart API.
-
-### 4) Docker credential helper error in WSL/Linux
-
-If build fails with `docker-credential-desktop.exe: exec format error`:
+Run:
 
 ```bash
 mkdir -p ~/.docker
@@ -227,19 +123,38 @@ Then retry:
 
 ```bash
 docker compose build
-docker compose up
+docker compose up -d
 ```
 
----
+### Shell loads but remote page fails
 
-## Quick Demo Checklist (Professor-Friendly)
+Check required ports:
+- `3001` (`remote-a`)
+- `3003` (`remote-b`)
+- `3004` (`remote-vue`, separate container)
 
-From a clean machine:
-1. Install Node 22, pnpm 9.15.0, Python 3.12.
-2. `pnpm install`
-3. `cd api && python -m pip install -r requirements.txt && cd ..`
-4. `cp api/.env.example api/.env` (optional keys can stay placeholder for basic demo)
-5. Start 5 terminals with the commands in **Option 1**.
-6. Open `http://localhost:3000` and navigate through all sections.
+### Quote data missing
 
-If that checklist passes, the project is fully up and running.
+Set a valid `FINNHUB_API_KEY` in `.env`, then restart API:
+
+```bash
+docker compose restart api
+```
+
+### CSV categorization is basic
+
+Set `OPENAI_API_KEY` in `.env`, then restart API:
+
+```bash
+docker compose restart api
+```
+
+## Professor Demo Checklist
+
+1. `cp .env.example .env`
+2. `docker compose build`
+3. `docker compose up -d`
+4. `docker build -t mfe-remote-vue ./remote-vue`
+5. `docker run --rm -p 3004:3004 mfe-remote-vue`
+6. Open `http://localhost:3000/transactions` and upload `dummy_transactions_jan_to_apr.csv`
+7. Open `http://localhost:3000` and click through all pages.
